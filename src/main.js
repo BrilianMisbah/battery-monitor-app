@@ -30,6 +30,7 @@ let timeAt100Start = null // When battery reached 100% while charging
 let chargingStartTime = null // When charging started
 let totalTimeAt100 = 0 // Total accumulated time at 100%
 let totalOverchargeTime = 0 // Total accumulated overcharge time across all sessions
+let isQuitting = false // Track if app is in process of quitting
 const LOW_BATTERY_COOLDOWN = 120000 // 2 minutes for low battery when not charging
 const HIGH_BATTERY_COOLDOWN = 300000 // 5 minutes for high battery notifications
 const FULL_BATTERY_COOLDOWN = 600000 // 10 minutes for 100% battery notifications
@@ -87,14 +88,21 @@ function createWindow() {
         console.log("Page finished loading")
     })
 
-    // Hide the window when it's closed instead of quitting
+    // Handle window close
     win.on("close", (event) => {
-        if (app.quitting) {
+        if (isQuitting) {
+            // App is quitting, allow close
             win = null
         } else {
+            // User clicked X, hide window instead of quitting
             event.preventDefault()
             win.hide()
         }
+    })
+
+    // Handle window closed
+    win.on("closed", () => {
+        win = null
     })
 
     // Start battery monitoring
@@ -122,7 +130,7 @@ function createTray() {
         {
             label: "Quit",
             click: () => {
-                app.quitting = true
+                isQuitting = true
                 app.quit()
             },
         },
@@ -497,6 +505,75 @@ app.on("activate", () => {
 
 // Clean up on app quit
 app.on("before-quit", () => {
-    clearInterval(batteryCheckInterval)
-    tray.destroy()
+    console.log("App quitting, cleaning up...")
+    cleanupApp()
 })
+
+// Handle system shutdown/restart
+app.on("before-quit-for-update", () => {
+    console.log("App updating, cleaning up...")
+    cleanupApp()
+})
+
+// Handle macOS system shutdown/restart
+if (process.platform === 'darwin') {
+    app.on("before-quit", () => {
+        console.log("macOS system shutdown detected, cleaning up...")
+        cleanupApp()
+    })
+}
+
+// Handle Windows system shutdown/restart
+if (process.platform === 'win32') {
+    process.on('SIGTERM', () => {
+        console.log("Windows system shutdown detected, cleaning up...")
+        cleanupApp()
+    })
+}
+
+// Handle Linux system shutdown/restart
+if (process.platform === 'linux') {
+    process.on('SIGTERM', () => {
+        console.log("Linux system shutdown detected, cleaning up...")
+        cleanupApp()
+    })
+}
+
+// Comprehensive cleanup function
+function cleanupApp() {
+    try {
+        console.log("Starting app cleanup...")
+        isQuitting = true
+
+        // Clear all intervals
+        if (batteryCheckInterval) {
+            clearInterval(batteryCheckInterval)
+            console.log("Cleared battery check interval")
+        }
+
+        // Destroy tray
+        if (tray && !tray.isDestroyed()) {
+            tray.destroy()
+            console.log("Destroyed tray")
+        }
+
+        // Close all windows
+        const windows = BrowserWindow.getAllWindows()
+        windows.forEach(window => {
+            if (!window.isDestroyed()) {
+                window.destroy()
+                console.log("Destroyed window")
+            }
+        })
+
+        // Force quit after cleanup
+        setTimeout(() => {
+            console.log("Force quitting app...")
+            app.exit(0)
+        }, 1000)
+
+    } catch (error) {
+        console.error("Error during cleanup:", error)
+        app.exit(1)
+    }
+}
