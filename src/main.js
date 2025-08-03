@@ -22,8 +22,11 @@ const store = new Store({
 let win
 let tray
 let batteryCheckInterval
-let lastNotificationTime = 0
-const NOTIFICATION_COOLDOWN = 30000 // 30 seconds cooldown between notifications
+let lastLowBatteryNotificationTime = 0
+let lastHighBatteryNotificationTime = 0
+let isCurrentlyCharging = false // Track charging state to detect changes
+const LOW_BATTERY_COOLDOWN = 120000 // 2 minutes for low battery when not charging
+const HIGH_BATTERY_COOLDOWN = 300000 // 5 minutes for high battery notifications
 
 // Check macOS permissions
 async function checkPermissions() {
@@ -214,17 +217,41 @@ function checkBatteryNotifications(level, isCharging) {
     const now = Date.now()
     const thresholds = store.get("notificationThresholds")
 
-    // Only send notifications if enough time has passed since last notification
-    if (now - lastNotificationTime < NOTIFICATION_COOLDOWN) {
-        return
+    // Detect charging state changes
+    const chargingStateChanged = isCurrentlyCharging !== isCharging
+    if (chargingStateChanged) {
+        console.log(`Charging state changed: ${isCurrentlyCharging} -> ${isCharging}`)
+        isCurrentlyCharging = isCharging
+
+        // If started charging, reset low battery notification timer to stop spam
+        if (isCharging) {
+            lastLowBatteryNotificationTime = now
+            console.log("Started charging - low battery notifications paused")
+        }
     }
 
+    // LOW BATTERY NOTIFICATIONS
     if (level <= thresholds.low && !isCharging) {
-        sendNotification("Battery Low", `Battery is at ${level}%. Please plug in your charger.`)
-        lastNotificationTime = now
-    } else if (level >= thresholds.high && isCharging) {
-        sendNotification("Battery Almost Full", `Battery is at ${level}%. You can unplug your charger.`)
-        lastNotificationTime = now
+        // Send low battery notification with appropriate cooldown
+        if (now - lastLowBatteryNotificationTime >= LOW_BATTERY_COOLDOWN) {
+            const urgencyLevel = level <= 10 ? "CRITICAL" : level <= 15 ? "VERY LOW" : "LOW"
+            sendNotification(
+                `Battery ${urgencyLevel}`,
+                `Battery is at ${level}%. Please plug in your charger immediately!`
+            )
+            lastLowBatteryNotificationTime = now
+            console.log(`Sent low battery notification: ${level}%`)
+        }
+    }
+
+    // HIGH BATTERY NOTIFICATIONS (when charging)
+    if (level >= thresholds.high && isCharging) {
+        // Only send if enough time passed since last high battery notification
+        if (now - lastHighBatteryNotificationTime >= HIGH_BATTERY_COOLDOWN) {
+            sendNotification("Battery Almost Full", `Battery is at ${level}%. You can unplug your charger.`)
+            lastHighBatteryNotificationTime = now
+            console.log(`Sent high battery notification: ${level}%`)
+        }
     }
 }
 
