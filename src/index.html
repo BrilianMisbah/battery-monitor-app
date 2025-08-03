@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Battery Monitor</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                display: flex;
+                justify-content: flex-start; /* Aligns content to the top */
+                align-items: center;
+                height: 100vh;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                margin: 0;
+                flex-direction: column;
+                color: white;
+                -webkit-app-region: drag; /* Make the entire window draggable */
+                user-select: none; /* Prevent text selection while dragging */
+                padding-top: 50px; /* Add some padding from the top */
+            }
+
+            .container {
+                background: rgba(255, 255, 255, 0.1);
+                backdrop-filter: blur(10px);
+                border-radius: 20px;
+                padding: 20px; /* Reduced padding */
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                text-align: center;
+                min-width: 220px; /* Reduced min-width */
+                cursor: move; /* Show move cursor */
+            }
+
+            h1 {
+                margin: 0 0 20px 0; /* Reduced margin */
+                font-size: 20px; /* Reduced font size */
+                font-weight: 600;
+            }
+
+            .battery-status {
+                width: 100%;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 15px;
+                margin: 15px 0; /* Reduced margin */
+                overflow: hidden;
+                position: relative;
+                transition: all 0.3s ease;
+                -webkit-app-region: no-drag; /* Allow interaction with battery bar */
+            }
+
+            .battery-bar {
+                height: 30px; /* Reduced height */
+                width: 0;
+                background: #4caf50;
+                border-radius: 15px;
+                transition: all 0.5s ease;
+                position: relative;
+            }
+
+            .battery-label {
+                font-size: 16px; /* Reduced font size */
+                margin-top: 15px; /* Reduced margin */
+                font-weight: 500;
+            }
+
+            .status-indicator {
+                font-size: 12px; /* Reduced font size */
+                margin-top: 10px;
+                opacity: 0.8;
+            }
+
+            /* Settings button */
+            .settings-button {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background: none;
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                -webkit-app-region: no-drag;
+            }
+
+            /* Settings page styles */
+            .settings-container {
+                padding: 20px;
+                text-align: center;
+                color: white;
+                -webkit-app-region: no-drag; /* Allow interaction with settings */
+            }
+
+            .settings-container h2 {
+                margin-top: 0;
+            }
+
+            .setting {
+                margin-bottom: 15px;
+                text-align: left;
+            }
+
+            .setting label {
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .setting input {
+                width: 100%;
+                padding: 8px;
+                border-radius: 5px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                box-sizing: border-box;
+                user-select: text; /* Allow text selection in inputs */
+            }
+
+            #save-settings {
+                padding: 10px 20px;
+                border-radius: 10px;
+                border: none;
+                background: #4caf50;
+                color: white;
+                cursor: pointer;
+            }
+
+            #back-to-main {
+                display: block;
+                color: white;
+                cursor: pointer;
+                text-decoration: underline;
+            }
+
+            .settings-actions {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 15px;
+                margin-top: 20px;
+            }
+
+            /* Charging animation */
+            .charging .battery-bar {
+                background: linear-gradient(90deg, #4caf50, #8bc34a, #4caf50);
+                background-size: 200% 100%;
+                animation: charging 2s ease-in-out infinite;
+            }
+
+            @keyframes charging {
+                0% {
+                    background-position: 200% 0;
+                }
+                100% {
+                    background-position: -200% 0;
+                }
+            }
+
+            /* Battery level colors */
+            .battery-bar.low {
+                background: #f44336;
+            }
+
+            .battery-bar.medium {
+                background: #ff9800;
+            }
+
+            .battery-bar.good {
+                background: #4caf50;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔋 Battery Monitor</h1>
+            <div class="battery-status">
+                <div class="battery-bar"></div>
+            </div>
+            <div class="battery-label">Battery: 0%</div>
+            <div class="status-indicator">Monitoring battery status...</div>
+        </div>
+
+        <div class="settings-container" style="display: none">
+            <h2>⚙️ Settings</h2>
+            <div class="setting">
+                <label for="low-threshold">Low Battery Alert (%)</label>
+                <input type="number" id="low-threshold" min="0" max="100" />
+            </div>
+            <div class="setting">
+                <label for="high-threshold">High Battery Alert (%)</label>
+                <input type="number" id="high-threshold" min="0" max="100" />
+            </div>
+            <div class="settings-actions">
+                <button id="save-settings">Save</button>
+                <a href="#" id="back-to-main">Back</a>
+            </div>
+        </div>
+
+        <button class="settings-button" id="open-settings">⚙️</button>
+
+        <script src="renderer.js"></script>
+    </body>
+</html>

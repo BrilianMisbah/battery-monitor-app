@@ -1,0 +1,84 @@
+{
+    "name": "batterymonitorapp",
+    "version": "1.0.0",
+    "type": "module",
+    "main": "src/main.js",
+    "homepage": "./",
+    "author": "Brilian Misbah",
+    "description": "A beautiful battery monitor app for macOS",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder",
+        "build-mac": "electron-builder --mac",
+        "dist": "electron-builder --publish=never",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "build": {
+        "appId": "com.yourname.batterymonitor",
+        "productName": "Battery Monitor",
+        "directories": {
+            "output": "dist"
+        },
+        "files": [
+            "src/**/*",
+            "assets/**/*",
+            "node_modules/**/*",
+            "package.json"
+        ],
+        "mac": {
+            "category": "public.app-category.utilities",
+            "icon": "assets/energy.png",
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": [
+                        "x64",
+                        "arm64"
+                    ]
+                }
+            ],
+            "artifactName": "${productName}-${version}-${arch}.${ext}"
+        },
+        "dmg": {
+            "title": "${productName} ${version}",
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 220
+                },
+                {
+                    "x": 410,
+                    "y": 220,
+                    "type": "link",
+                    "path": "/Applications"
+                }
+            ],
+            "window": {
+                "width": 540,
+                "height": 380
+            }
+        },
+        "linux": {
+            "target": "AppImage"
+        },
+        "win": {
+            "target": "nsis"
+        }
+    },
+    "keywords": [
+        "battery",
+        "monitor",
+        "macos",
+        "electron",
+        "utility"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "electron": "^37.2.4",
+        "electron-builder": "^24.13.3"
+    },
+    "dependencies": {
+        "electron-store": "^10.1.0",
+        "macos-battery": "^1.1.1"
+    }
+}
