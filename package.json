@@ -27,7 +27,7 @@
         ],
         "mac": {
             "category": "public.app-category.utilities",
-            "icon": "assets/energy.png",
+            "icon": "assets/icons/energy_512x512.png",
             "target": [
                 {
                     "target": "dmg",

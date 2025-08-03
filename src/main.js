@@ -66,7 +66,7 @@ function createWindow() {
         trafficLightPosition: { x: 10, y: 13 },
         resizable: false, // Make the window not resizable
         alwaysOnTop: true,
-        icon: join(__dirname, "../assets/energy.png"), // Set app icon
+        icon: join(__dirname, "../assets/icons/energy_512x512.png"), // Set app icon
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -484,7 +484,7 @@ app.whenReady().then(() => {
 
     // Set dock icon for development (macOS only)
     if (process.platform === 'darwin') {
-        const dockIconPath = join(__dirname, "../assets/energy.png")
+        const dockIconPath = join(__dirname, "../assets/icons/energy_512x512.png")
         app.dock.setIcon(dockIconPath)
     }
 })

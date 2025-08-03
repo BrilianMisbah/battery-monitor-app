@@ -4,7 +4,21 @@ A beautiful, feature-rich battery monitoring application **exclusively for macOS
 
 **⚠️ macOS Only**: This app is specifically designed for macOS and uses macOS-specific system features. It is not compatible with Windows or Linux.
 
-![Battery Monitor App](assets/energy.png)
+![Battery Monitor App](assets/icons/energy_512x512.png)
+
+## 📱 App Showcase
+
+### Main Interface
+![Main App Interface](assets/screenshots/main_app.png)
+*Real-time battery monitoring with beautiful glassmorphism design*
+
+### Settings Page
+![Settings Page](assets/screenshots/setting_page.png)
+*Customizable notification thresholds and preferences*
+
+### Analytics Dashboard
+![Analytics Page](assets/screenshots/analytics_page.png)
+*Comprehensive battery health and charging time analytics*
 
 ## ✨ Features
 
