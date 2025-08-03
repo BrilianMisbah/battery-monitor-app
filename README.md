@@ -1,6 +1,8 @@
 # 🔋 Battery Monitor App
 
-A beautiful, feature-rich battery monitoring application for macOS built with Electron. Monitor your battery health, track charging patterns, and get intelligent notifications to optimize your MacBook's battery life.
+A beautiful, feature-rich battery monitoring application **exclusively for macOS** built with Electron. Monitor your battery health, track charging patterns, and get intelligent notifications to optimize your MacBook's battery life.
+
+**⚠️ macOS Only**: This app is specifically designed for macOS and uses macOS-specific system features. It is not compatible with Windows or Linux.
 
 ![Battery Monitor App](assets/energy.png)
 
@@ -41,11 +43,12 @@ A beautiful, feature-rich battery monitoring application for macOS built with El
 - **Native macOS Integration**: Proper dock icon and notifications
 - **Background Operation**: Runs silently in the background
 - **Proper Shutdown Handling**: Clean app termination
+- **macOS-Specific Features**: Uses native macOS battery APIs and system commands
 
 ## 🚀 Installation
 
 ### Prerequisites
-- macOS 10.12 or later
+- **macOS 10.12 or later** (required - app is not compatible with other operating systems)
 - Node.js 16+ and npm
 
 ### Development Setup
@@ -66,9 +69,6 @@ npm start
 # Build for macOS (creates .dmg files)
 npm run build-mac
 
-# Build for all platforms
-npm run build
-
 # Build for distribution (no publishing)
 npm run dist
 ```
@@ -76,6 +76,8 @@ npm run dist
 The built app will be available in the `dist/` folder:
 - `Battery Monitor-1.0.0-arm64.dmg` - For Apple Silicon Macs (M1/M2/M3)
 - `Battery Monitor-1.0.0-x64.dmg` - For Intel Macs
+
+**Note**: This app is designed exclusively for macOS and cannot be built for Windows or Linux.
 
 ## 📱 Usage
 
@@ -121,8 +123,9 @@ The built app will be available in the `dist/` folder:
 ### Architecture
 - **Frontend**: HTML5, CSS3, JavaScript
 - **Backend**: Electron (Node.js)
-- **Battery Data**: macOS system commands + macos-battery library
+- **Battery Data**: macOS system commands + macos-battery library (macOS-specific)
 - **Storage**: electron-store for persistent settings
+- **Platform**: macOS only - uses native macOS APIs and system integration
 
 ### Key Components
 - **Main Process**: Battery monitoring, notifications, system integration
@@ -131,10 +134,11 @@ The built app will be available in the `dist/` folder:
 - **Analytics Engine**: Real-time battery health data collection
 
 ### System Requirements
-- **OS**: macOS 10.12+
+- **OS**: macOS 10.12+ (exclusively - no Windows or Linux support)
 - **Architecture**: Intel (x64) and Apple Silicon (arm64)
 - **Memory**: ~50MB RAM usage
 - **Storage**: ~100MB disk space
+- **Dependencies**: macOS system commands and native battery APIs
 
 ## 🎯 Battery Health Features
 
@@ -153,9 +157,10 @@ The built app will be available in the `dist/` folder:
 ## 🔒 Privacy & Security
 
 - **Local Only**: No data sent to external servers
-- **System Permissions**: Only requests necessary battery access
+- **System Permissions**: Only requests necessary macOS battery access
 - **Secure IPC**: Isolated communication between processes
 - **No Tracking**: Completely private battery monitoring
+- **macOS Native**: Uses only macOS system APIs and commands
 
 ## 🐛 Troubleshooting
 
@@ -168,7 +173,8 @@ The built app will be available in the `dist/` folder:
 
 **Battery data not showing:**
 - Verify macOS battery permissions
-- Check if battery is detected by system
+- Check if battery is detected by macOS system
+- Ensure you're running on macOS (app is not compatible with other OS)
 - Restart the app if needed
 
 **Notifications not working:**
@@ -192,7 +198,10 @@ win.webContents.openDevTools()
 - [ ] Custom notification sounds
 - [ ] Battery usage statistics
 - [ ] Power consumption monitoring
-- [ ] Multiple device support
+- [ ] Enhanced macOS integration features
+- [ ] Advanced battery health predictions
+
+**Note**: All future features will remain macOS-exclusive to maintain optimal performance and system integration.
 
 ## 🤝 Contributing
 
@@ -208,13 +217,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- **Electron** for the cross-platform framework
-- **macos-battery** for battery data access
-- **Apple** for macOS system integration
+- **Electron** for the desktop application framework
+- **macos-battery** for macOS battery data access
+- **Apple** for macOS system integration and APIs
 - **Community** for feedback and suggestions
 
 ---
 
 **Made with ❤️ for better battery health**
 
-*Optimize your MacBook's battery life with intelligent monitoring and smart notifications.*
+*Optimize your MacBook's battery life with intelligent monitoring and smart notifications. Designed exclusively for macOS.*
