@@ -24,9 +24,11 @@ let tray
 let batteryCheckInterval
 let lastLowBatteryNotificationTime = 0
 let lastHighBatteryNotificationTime = 0
+let lastFullBatteryNotificationTime = 0
 let isCurrentlyCharging = false // Track charging state to detect changes
 const LOW_BATTERY_COOLDOWN = 120000 // 2 minutes for low battery when not charging
 const HIGH_BATTERY_COOLDOWN = 300000 // 5 minutes for high battery notifications
+const FULL_BATTERY_COOLDOWN = 600000 // 10 minutes for 100% battery notifications
 
 // Check macOS permissions
 async function checkPermissions() {
@@ -244,8 +246,17 @@ function checkBatteryNotifications(level, isCharging) {
         }
     }
 
-    // HIGH BATTERY NOTIFICATIONS (when charging)
-    if (level >= thresholds.high && isCharging) {
+    // FULL BATTERY NOTIFICATIONS (100% charged)
+    if (level >= 100 && isCharging) {
+        // Send 100% notification with longer cooldown (10 minutes)
+        if (now - lastFullBatteryNotificationTime >= FULL_BATTERY_COOLDOWN) {
+            sendNotification("Battery Full 🔋", "Battery is fully charged! Unplug your charger to preserve battery health.")
+            lastFullBatteryNotificationTime = now
+            console.log(`Sent full battery notification: ${level}%`)
+        }
+    }
+    // HIGH BATTERY NOTIFICATIONS (when charging, but not 100%)
+    else if (level >= thresholds.high && level < 100 && isCharging) {
         // Only send if enough time passed since last high battery notification
         if (now - lastHighBatteryNotificationTime >= HIGH_BATTERY_COOLDOWN) {
             sendNotification("Battery Almost Full", `Battery is at ${level}%. You can unplug your charger.`)
