@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
     resizeForSettings: () => ipcRenderer.invoke("resize-for-settings"),
     resizeForMain: () => ipcRenderer.invoke("resize-for-main"),
 
+    // Expose analytics functions
+    getBatteryAnalytics: () => ipcRenderer.invoke("get-battery-analytics"),
+
     // Custom listener for battery updates
     onBatteryUpdate: (callback) => {
         const listener = (event, batteryData) => callback(batteryData)

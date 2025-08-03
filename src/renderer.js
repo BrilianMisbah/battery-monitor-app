@@ -129,35 +129,167 @@ document.addEventListener("DOMContentLoaded", () => {
     const highThresholdInput = document.getElementById("high-threshold")
 
     openSettingsBtn.addEventListener("click", async () => {
-        window.electronAPI.resizeForSettings()
-        mainContainer.style.display = "none"
-        settingsContainer.style.display = "block"
-        openSettingsBtn.style.display = "none"
-
-        const settings = await window.electronAPI.getSettings()
-        lowThresholdInput.value = settings.low
-        highThresholdInput.value = settings.high
+        showSettings()
     })
 
     backToMainBtn.addEventListener("click", () => {
-        window.electronAPI.resizeForMain()
-        mainContainer.style.display = "block"
-        settingsContainer.style.display = "none"
-        openSettingsBtn.style.display = "block"
+        showMain()
     })
 
     saveSettingsBtn.addEventListener("click", () => {
         const low = parseInt(lowThresholdInput.value, 10)
         const high = parseInt(highThresholdInput.value, 10)
         window.electronAPI.setSettings({ low, high })
-        backToMainBtn.click() // Go back to the main view
+        showMain() // Go back to the main view
     })
 
     // Listen for the open-settings event from the main process
     window.electronAPI.onOpenSettings(() => {
-        openSettingsBtn.click()
+        showSettings()
     })
 })
+
+// Analytics functionality
+document.getElementById("open-analytics").addEventListener("click", () => {
+    showAnalytics()
+})
+
+document.getElementById("back-to-main-from-analytics").addEventListener("click", () => {
+    showMain()
+})
+
+document.getElementById("refresh-analytics").addEventListener("click", () => {
+    loadAnalyticsData()
+})
+
+function showSettings() {
+    window.electronAPI.resizeForSettings()
+    document.querySelector(".container").style.display = "none"
+    document.querySelector(".settings-container").style.display = "block"
+    document.querySelector(".analytics-container").style.display = "none"
+    document.querySelector(".bottom-buttons").style.display = "none" // Hide buttons in settings
+
+    // Load settings data
+    loadSettingsData()
+}
+
+function showAnalytics() {
+    document.querySelector(".container").style.display = "none"
+    document.querySelector(".settings-container").style.display = "none"
+    document.querySelector(".analytics-container").style.display = "block"
+    document.querySelector(".bottom-buttons").style.display = "none" // Hide buttons in analytics
+    loadAnalyticsData()
+}
+
+function showMain() {
+    window.electronAPI.resizeForMain()
+    document.querySelector(".container").style.display = "block"
+    document.querySelector(".settings-container").style.display = "none"
+    document.querySelector(".analytics-container").style.display = "none"
+    document.querySelector(".bottom-buttons").style.display = "flex" // Show buttons in main
+}
+
+async function loadSettingsData() {
+    try {
+        const settings = await window.electronAPI.getSettings()
+        document.getElementById("low-threshold").value = settings.low
+        document.getElementById("high-threshold").value = settings.high
+    } catch (error) {
+        console.error("Error loading settings:", error)
+    }
+}
+
+async function loadAnalyticsData() {
+    try {
+        console.log("Loading analytics data...")
+
+        // Show loading state
+        const elements = {
+            health: document.getElementById("battery-health"),
+            cycleCount: document.getElementById("cycle-count"),
+            designCapacity: document.getElementById("design-capacity"),
+            currentCapacity: document.getElementById("current-capacity"),
+            timeAt100: document.getElementById("time-at-100"),
+            totalOverchargeTime: document.getElementById("total-overcharge-time"),
+            totalChargeTime: document.getElementById("total-charge-time"),
+            lastFullCharge: document.getElementById("last-full-charge"),
+        }
+
+        Object.values(elements).forEach(el => {
+            if (el) el.textContent = "Loading..."
+        })
+
+        const analytics = await window.electronAPI.getBatteryAnalytics()
+        console.log("Analytics data:", analytics)
+
+        // Update health section
+        if (elements.health) {
+            elements.health.textContent = typeof analytics.health === 'number'
+                ? `${analytics.health}%`
+                : analytics.health
+        }
+
+        if (elements.cycleCount) {
+            elements.cycleCount.textContent = analytics.cycleCount.toString()
+        }
+
+        if (elements.designCapacity) {
+            elements.designCapacity.textContent = typeof analytics.designCapacity === 'number'
+                ? `${analytics.designCapacity} mAh`
+                : analytics.designCapacity
+        }
+
+        if (elements.currentCapacity) {
+            elements.currentCapacity.textContent = typeof analytics.currentCapacity === 'number'
+                ? `${analytics.currentCapacity} mAh`
+                : analytics.currentCapacity
+        }
+
+        // Update timing section
+        if (elements.timeAt100) {
+            const time100 = analytics.timeAt100
+            elements.timeAt100.textContent = time100 > 0
+                ? `${time100}m`
+                : "0m"
+        }
+
+        if (elements.totalOverchargeTime) {
+            const totalOvercharge = analytics.totalOverchargeTime
+            if (totalOvercharge >= 60) {
+                const hours = Math.floor(totalOvercharge / 60)
+                const minutes = totalOvercharge % 60
+                elements.totalOverchargeTime.textContent = `${hours}h ${minutes}m`
+            } else {
+                elements.totalOverchargeTime.textContent = `${totalOvercharge}m`
+            }
+        }
+
+        if (elements.totalChargeTime) {
+            const totalTime = analytics.totalChargeTime
+            if (totalTime >= 60) {
+                const hours = Math.floor(totalTime / 60)
+                const minutes = totalTime % 60
+                elements.totalChargeTime.textContent = `${hours}h ${minutes}m`
+            } else {
+                elements.totalChargeTime.textContent = `${totalTime}m`
+            }
+        }
+
+        if (elements.lastFullCharge) {
+            elements.lastFullCharge.textContent = analytics.lastFullCharge === "-" || analytics.lastFullCharge === "Never"
+                ? "-"
+                : new Date(analytics.lastFullCharge).toLocaleString()
+        }
+
+    } catch (error) {
+        console.error("Error loading analytics:", error)
+
+        // Show error state
+        document.querySelectorAll(".analytics-value").forEach(el => {
+            el.textContent = "Error"
+        })
+    }
+}
 
 // Clean up listeners when page unloads
 window.addEventListener("beforeunload", () => {

@@ -1,203 +1,409 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Battery Monitor</title>
-        <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                display: flex;
-                justify-content: flex-start; /* Aligns content to the top */
-                align-items: center;
-                height: 100vh;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                margin: 0;
-                flex-direction: column;
-                color: white;
-                -webkit-app-region: drag; /* Make the entire window draggable */
-                user-select: none; /* Prevent text selection while dragging */
-                padding-top: 50px; /* Add some padding from the top */
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Battery Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: flex-start;
+            /* Aligns content to the top */
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            flex-direction: column;
+            color: white;
+            -webkit-app-region: drag;
+            /* Make the entire window draggable */
+            user-select: none;
+            /* Prevent text selection while dragging */
+            padding-top: 50px;
+            /* Add some padding from the top */
+            overflow: hidden;
+            /* Prevent body scrolling */
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            /* Reduced padding */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            min-width: 220px;
+            /* Reduced min-width */
+            cursor: move;
+            /* Show move cursor */
+        }
+
+        h1 {
+            margin: 0 0 20px 0;
+            /* Reduced margin */
+            font-size: 20px;
+            /* Reduced font size */
+            font-weight: 600;
+        }
+
+        .battery-status {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            margin: 15px 0;
+            /* Reduced margin */
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+            -webkit-app-region: no-drag;
+            /* Allow interaction with battery bar */
+        }
+
+        .battery-bar {
+            height: 30px;
+            /* Reduced height */
+            width: 0;
+            background: #4caf50;
+            border-radius: 15px;
+            transition: all 0.5s ease;
+            position: relative;
+        }
+
+        .battery-label {
+            font-size: 16px;
+            /* Reduced font size */
+            margin-top: 15px;
+            /* Reduced margin */
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            font-size: 12px;
+            /* Reduced font size */
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* Bottom buttons container */
+        .bottom-buttons {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        /* Settings and Analytics buttons */
+        .settings-button,
+        .analytics-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .settings-button:hover,
+        .analytics-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* Settings page styles */
+        .settings-container {
+            padding: 20px;
+            text-align: center;
+            color: white;
+            -webkit-app-region: no-drag;
+            overflow: hidden;
+            /* Disable scrolling for settings */
+            /* Allow interaction with settings */
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .settings-container h2 {
+            margin-top: 0;
+        }
+
+        .setting {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .setting label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .setting input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-sizing: border-box;
+            user-select: text;
+            /* Allow text selection in inputs */
+        }
+
+        .settings-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .settings-actions button,
+        .settings-actions a {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .settings-actions button:hover,
+        .settings-actions a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        #save-settings {
+            background: #4caf50;
+        }
+
+        #save-settings:hover {
+            background: #45a049;
+        }
+
+        /* Charging animation */
+        .charging .battery-bar {
+            background: linear-gradient(90deg, #4caf50, #8bc34a, #4caf50);
+            background-size: 200% 100%;
+            animation: charging 2s ease-in-out infinite;
+        }
+
+        @keyframes charging {
+            0% {
+                background-position: 200% 0;
             }
 
-            .container {
-                background: rgba(255, 255, 255, 0.1);
-                backdrop-filter: blur(10px);
-                border-radius: 20px;
-                padding: 20px; /* Reduced padding */
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                text-align: center;
-                min-width: 220px; /* Reduced min-width */
-                cursor: move; /* Show move cursor */
+            100% {
+                background-position: -200% 0;
             }
+        }
 
-            h1 {
-                margin: 0 0 20px 0; /* Reduced margin */
-                font-size: 20px; /* Reduced font size */
-                font-weight: 600;
-            }
+        /* Battery level colors */
+        .battery-bar.low {
+            background: #f44336;
+        }
 
-            .battery-status {
-                width: 100%;
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 15px;
-                margin: 15px 0; /* Reduced margin */
-                overflow: hidden;
-                position: relative;
-                transition: all 0.3s ease;
-                -webkit-app-region: no-drag; /* Allow interaction with battery bar */
-            }
+        .battery-bar.medium {
+            background: #ff9800;
+        }
 
-            .battery-bar {
-                height: 30px; /* Reduced height */
-                width: 0;
-                background: #4caf50;
-                border-radius: 15px;
-                transition: all 0.5s ease;
-                position: relative;
-            }
+        .battery-bar.good {
+            background: #4caf50;
+        }
 
-            .battery-label {
-                font-size: 16px; /* Reduced font size */
-                margin-top: 15px; /* Reduced margin */
-                font-weight: 500;
-            }
+        /* Analytics page styles */
+        .analytics-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+            -webkit-app-region: no-drag;
+        }
 
-            .status-indicator {
-                font-size: 12px; /* Reduced font size */
-                margin-top: 10px;
-                opacity: 0.8;
-            }
+        .analytics-container h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
 
-            /* Settings button */
-            .settings-button {
-                position: absolute;
-                bottom: 10px;
-                right: 10px;
-                background: none;
-                border: none;
-                color: white;
-                font-size: 24px;
-                cursor: pointer;
-                -webkit-app-region: no-drag;
-            }
+        .analytics-section {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+        }
 
-            /* Settings page styles */
-            .settings-container {
-                padding: 20px;
-                text-align: center;
-                color: white;
-                -webkit-app-region: no-drag; /* Allow interaction with settings */
-            }
+        .analytics-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+        }
 
-            .settings-container h2 {
-                margin-top: 0;
-            }
+        .analytics-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-            .setting {
-                margin-bottom: 15px;
-                text-align: left;
-            }
+        .analytics-item:last-child {
+            border-bottom: none;
+        }
 
-            .setting label {
-                display: block;
-                margin-bottom: 5px;
-            }
+        .analytics-label {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 500;
+        }
 
-            .setting input {
-                width: 100%;
-                padding: 8px;
-                border-radius: 5px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                background: rgba(255, 255, 255, 0.1);
-                color: white;
-                box-sizing: border-box;
-                user-select: text; /* Allow text selection in inputs */
-            }
+        .analytics-value {
+            font-size: 14px;
+            color: white;
+            font-weight: 600;
+            font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+        }
 
-            #save-settings {
-                padding: 10px 20px;
-                border-radius: 10px;
-                border: none;
-                background: #4caf50;
-                color: white;
-                cursor: pointer;
-            }
+        .analytics-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
 
-            #back-to-main {
-                display: block;
-                color: white;
-                cursor: pointer;
-                text-decoration: underline;
-            }
+        .analytics-actions button,
+        .analytics-actions a {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
 
-            .settings-actions {
-                display: flex;
-                justify-content: flex-end;
-                align-items: center;
-                gap: 15px;
-                margin-top: 20px;
-            }
+        .analytics-actions button:hover,
+        .analytics-actions a:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
 
-            /* Charging animation */
-            .charging .battery-bar {
-                background: linear-gradient(90deg, #4caf50, #8bc34a, #4caf50);
-                background-size: 200% 100%;
-                animation: charging 2s ease-in-out infinite;
-            }
+<body>
+    <div class="container">
+        <h1>🔋 Battery Monitor</h1>
+        <div class="battery-status">
+            <div class="battery-bar"></div>
+        </div>
+        <div class="battery-label">Battery: 0%</div>
+        <div class="status-indicator">Monitoring battery status...</div>
+    </div>
 
-            @keyframes charging {
-                0% {
-                    background-position: 200% 0;
-                }
-                100% {
-                    background-position: -200% 0;
-                }
-            }
+    <div class="settings-container" style="display: none">
+        <h2>⚙️ Settings</h2>
+        <div class="setting">
+            <label for="low-threshold">Low Battery Alert (%)</label>
+            <input type="number" id="low-threshold" min="0" max="100" />
+        </div>
+        <div class="setting">
+            <label for="high-threshold">High Battery Alert (%)</label>
+            <input type="number" id="high-threshold" min="0" max="100" />
+        </div>
+        <div class="settings-actions">
+            <button id="save-settings">Save</button>
+            <a href="#" id="back-to-main">Back</a>
+        </div>
+    </div>
 
-            /* Battery level colors */
-            .battery-bar.low {
-                background: #f44336;
-            }
+    <div class="analytics-container" style="display: none">
+        <h2>📊 Battery Analytics</h2>
 
-            .battery-bar.medium {
-                background: #ff9800;
-            }
-
-            .battery-bar.good {
-                background: #4caf50;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>🔋 Battery Monitor</h1>
-            <div class="battery-status">
-                <div class="battery-bar"></div>
+        <div class="analytics-section">
+            <h3>🔋 Battery Health</h3>
+            <div class="analytics-item">
+                <span class="analytics-label">Health:</span>
+                <span class="analytics-value" id="battery-health">Loading...</span>
             </div>
-            <div class="battery-label">Battery: 0%</div>
-            <div class="status-indicator">Monitoring battery status...</div>
+            <div class="analytics-item">
+                <span class="analytics-label">Cycle Count:</span>
+                <span class="analytics-value" id="cycle-count">Loading...</span>
+            </div>
+            <div class="analytics-item">
+                <span class="analytics-label">Design Capacity:</span>
+                <span class="analytics-value" id="design-capacity">Loading...</span>
+            </div>
+            <div class="analytics-item">
+                <span class="analytics-label">Current Capacity:</span>
+                <span class="analytics-value" id="current-capacity">Loading...</span>
+            </div>
         </div>
 
-        <div class="settings-container" style="display: none">
-            <h2>⚙️ Settings</h2>
-            <div class="setting">
-                <label for="low-threshold">Low Battery Alert (%)</label>
-                <input type="number" id="low-threshold" min="0" max="100" />
+        <div class="analytics-section">
+            <h3>⏱️ Charging Time</h3>
+            <div class="analytics-item">
+                <span class="analytics-label">Time at 100%:</span>
+                <span class="analytics-value" id="time-at-100">0m</span>
             </div>
-            <div class="setting">
-                <label for="high-threshold">High Battery Alert (%)</label>
-                <input type="number" id="high-threshold" min="0" max="100" />
+            <div class="analytics-item">
+                <span class="analytics-label">Session Overcharge Time:</span>
+                <span class="analytics-value" id="total-overcharge-time">0m</span>
             </div>
-            <div class="settings-actions">
-                <button id="save-settings">Save</button>
-                <a href="#" id="back-to-main">Back</a>
+            <div class="analytics-item">
+                <span class="analytics-label">Total Charge Time:</span>
+                <span class="analytics-value" id="total-charge-time">0m</span>
+            </div>
+            <div class="analytics-item">
+                <span class="analytics-label">Last Full Charge:</span>
+                <span class="analytics-value" id="last-full-charge">Never</span>
             </div>
         </div>
 
+        <div class="analytics-actions">
+            <button id="refresh-analytics">🔄 Refresh</button>
+            <a href="#" id="back-to-main-from-analytics">Back</a>
+        </div>
+    </div>
+
+    <div class="bottom-buttons">
         <button class="settings-button" id="open-settings">⚙️</button>
+        <button class="analytics-button" id="open-analytics">📊</button>
+    </div>
 
-        <script src="renderer.js"></script>
-    </body>
+    <script src="renderer.js"></script>
+</body>
+
 </html>

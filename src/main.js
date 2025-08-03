@@ -26,6 +26,10 @@ let lastLowBatteryNotificationTime = 0
 let lastHighBatteryNotificationTime = 0
 let lastFullBatteryNotificationTime = 0
 let isCurrentlyCharging = false // Track charging state to detect changes
+let timeAt100Start = null // When battery reached 100% while charging
+let chargingStartTime = null // When charging started
+let totalTimeAt100 = 0 // Total accumulated time at 100%
+let totalOverchargeTime = 0 // Total accumulated overcharge time across all sessions
 const LOW_BATTERY_COOLDOWN = 120000 // 2 minutes for low battery when not charging
 const HIGH_BATTERY_COOLDOWN = 300000 // 5 minutes for high battery notifications
 const FULL_BATTERY_COOLDOWN = 600000 // 10 minutes for 100% battery notifications
@@ -163,6 +167,9 @@ async function getBatteryStatus() {
             state: batteryData.state,
         }
 
+        // Track charging time for analytics
+        trackChargingTime(result.level, isCharging)
+
         console.log("Returning battery status:", result)
         return result
     } catch (error) {
@@ -173,6 +180,145 @@ async function getBatteryStatus() {
             isCharging: Math.random() > 0.5,
             noBattery: false,
             state: "undetermined",
+        }
+    }
+}
+
+// Get detailed battery analytics using system commands
+async function getBatteryAnalytics() {
+    try {
+        console.log("Getting battery analytics...")
+
+        // Get basic battery data from macos-battery
+        const batteryData = await macOsBattery.getBatteryStateObject()
+        console.log("Basic battery data received:", batteryData)
+
+        // Get detailed battery info using system commands
+        const { exec } = require('child_process')
+        const util = require('util')
+        const execAsync = util.promisify(exec)
+
+        let health = "Unknown"
+        let cycleCount = 0
+        let designCapacity = 0
+        let currentCapacity = 0
+        let temperature = 0
+        let voltage = 0
+
+        try {
+            // Get all battery information in one command
+            const batteryResult = await execAsync('system_profiler SPPowerDataType')
+            const batteryLines = batteryResult.stdout.split('\n')
+
+            for (const line of batteryLines) {
+                const trimmedLine = line.trim()
+
+                // Get cycle count
+                if (trimmedLine.includes('Cycle Count:')) {
+                    cycleCount = parseInt(trimmedLine.split(':')[1].trim()) || 0
+                }
+                // Get battery condition/health
+                else if (trimmedLine.includes('Condition:')) {
+                    health = trimmedLine.split(':')[1].trim() || "Unknown"
+                }
+                // Get maximum capacity (this is the health percentage)
+                else if (trimmedLine.includes('Maximum Capacity:')) {
+                    const capacityMatch = trimmedLine.match(/(\d+)%/)
+                    if (capacityMatch) {
+                        // Convert percentage to actual capacity (approximate)
+                        // Most MacBook batteries are around 5000-7000 mAh
+                        const percentage = parseInt(capacityMatch[1])
+                        designCapacity = 6000 // Approximate design capacity
+                        currentCapacity = Math.round((percentage / 100) * designCapacity)
+                    }
+                }
+            }
+
+            console.log("Parsed battery data:", {
+                cycleCount,
+                health,
+                designCapacity,
+                currentCapacity
+            })
+
+        } catch (cmdError) {
+            console.log("System command failed, using fallback data:", cmdError.message)
+        }
+
+        // Calculate time metrics
+        const now = Date.now()
+        let currentTimeAt100 = 0
+        let totalChargeTime = 0
+
+        if (timeAt100Start && batteryData.percent >= 100 && isCurrentlyCharging) {
+            currentTimeAt100 = Math.floor((now - timeAt100Start) / 1000 / 60) // minutes
+        }
+
+        if (chargingStartTime && isCurrentlyCharging) {
+            totalChargeTime = Math.floor((now - chargingStartTime) / 1000 / 60) // minutes
+        }
+
+        return {
+            health: health,
+            cycleCount: cycleCount,
+            designCapacity: designCapacity,
+            currentCapacity: currentCapacity,
+            timeAt100: currentTimeAt100,
+            totalChargeTime: totalChargeTime,
+            totalOverchargeTime: totalTimeAt100, // Session overcharge time (resets each charge)
+            lastFullCharge: "-", // Not easily available via system commands
+            temperature: "-", // Not available in system_profiler output
+            voltage: "-", // Not available in system_profiler output
+        }
+    } catch (error) {
+        console.error("Error getting battery analytics:", error)
+        return {
+            health: "Error",
+            cycleCount: "-",
+            designCapacity: "-",
+            currentCapacity: "-",
+            timeAt100: 0,
+            totalChargeTime: 0,
+            totalOverchargeTime: 0,
+            lastFullCharge: "-",
+            temperature: "-",
+            voltage: "-",
+        }
+    }
+}
+
+// Track charging time for analytics
+function trackChargingTime(level, isCharging) {
+    const now = Date.now()
+
+    // Track when charging starts
+    if (isCharging && !isCurrentlyCharging) {
+        chargingStartTime = now
+        console.log("Charging started, tracking charge time")
+    }
+
+    // Track when charging stops
+    if (!isCharging && isCurrentlyCharging) {
+        chargingStartTime = null
+        timeAt100Start = null
+        totalTimeAt100 = 0 // Reset session overcharge time when charging stops
+        console.log("Charging stopped, reset timers and session overcharge time")
+    }
+
+    // Track time at 100%
+    if (level >= 100 && isCharging) {
+        if (!timeAt100Start) {
+            timeAt100Start = now
+            console.log("Battery reached 100%, starting 100% timer")
+        }
+    } else {
+        if (timeAt100Start) {
+            // Add to total time at 100% before resetting
+            const sessionTimeAt100 = Math.floor((now - timeAt100Start) / 1000 / 60)
+            totalTimeAt100 += sessionTimeAt100
+            totalTimeAt100 += sessionTimeAt100 // Add to session overcharge time
+            timeAt100Start = null
+            console.log(`Battery dropped below 100% or stopped charging. Session time at 100%: ${sessionTimeAt100}m, Session overcharge time: ${totalTimeAt100}m`)
         }
     }
 }
@@ -295,13 +441,31 @@ ipcMain.handle("set-settings", (event, settings) => {
 // IPC handler to resize window for settings
 ipcMain.handle("resize-for-settings", () => {
     if (win) {
-        win.setSize(300, 320, true) // Animate the resize
+        win.setSize(305, 280, true) // Animate the resize
     }
 })
 
 ipcMain.handle("resize-for-main", () => {
     if (win) {
-        win.setSize(285, 245, true) // Animate back to original size
+        win.setSize(305, 275, true) // Animate back to original size
+    }
+})
+
+// IPC handler for battery analytics
+ipcMain.handle("get-battery-analytics", async () => {
+    try {
+        return await getBatteryAnalytics()
+    } catch (error) {
+        console.error("Error getting battery analytics:", error)
+        return {
+            health: "Error",
+            cycleCount: "N/A",
+            designCapacity: "N/A",
+            currentCapacity: "N/A",
+            timeAt100: 0,
+            totalChargeTime: 0,
+            lastFullCharge: "Error",
+        }
     }
 })
 
