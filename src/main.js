@@ -271,6 +271,12 @@ ipcMain.handle("resize-for-main", () => {
 app.whenReady().then(() => {
     createWindow()
     createTray()
+
+    // Set dock icon for development (macOS only)
+    if (process.platform === 'darwin') {
+        const dockIconPath = join(__dirname, "../assets/energy.png")
+        app.dock.setIcon(dockIconPath)
+    }
 })
 
 // Quit the app when closed
